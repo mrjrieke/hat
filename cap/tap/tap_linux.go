@@ -7,10 +7,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"syscall"
 
@@ -19,8 +21,16 @@ import (
 
 const penseSocket = "./snap.sock"
 
-func Tap(tapMap map[string]string) error {
-	listener, err := net.Listen("unix", penseSocket)
+func Tap(penseDir string, tapMap map[string]string) error {
+
+	var penseDirSocket = filepath.Clean(penseDir + penseSocket)
+
+	err := os.MkdirAll(penseDir, 0770)
+	if err != nil {
+		return errors.Join(errors.New("Dir create error"), err)
+	}
+
+	listener, err := net.Listen("unix", penseDirSocket)
 	if err != nil {
 		return err
 	}
@@ -114,8 +124,9 @@ func Tap(tapMap map[string]string) error {
 	}
 }
 
-func TapWriter(pense string) (map[string]string, error) {
-	penseConn, penseErr := net.Dial("unix", penseSocket)
+func TapWriter(penseDir string, pense string) (map[string]string, error) {
+	var penseDirSocket = filepath.Clean(penseDir + penseSocket)
+	penseConn, penseErr := net.Dial("unix", penseDirSocket)
 	if penseErr != nil {
 		return nil, penseErr
 	}

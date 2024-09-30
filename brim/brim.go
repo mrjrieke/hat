@@ -66,7 +66,7 @@ func penseQuery(pense string) {
 		}
 	}
 
-	eyeMap, err := tap.TapWriter(penseSum)
+	eyeMap, err := tap.TapWriter("./", penseSum)
 	if err != nil {
 		log.Fatalf("Failure to communicate: %v", err)
 	}
