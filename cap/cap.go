@@ -131,7 +131,6 @@ func handlePluck(conn *kcp.UDPSession, acceptRemote func(int, string) bool) {
 		if acceptRemote(FEATHER_COMMON, conn.RemoteAddr().String()) {
 			lastReadN := 0
 			for {
-				time.Sleep(time.Second * 3)
 				conn.SetDeadline(time.Now().Add(15 * time.Second))
 				n, err := conn.Read(buf)
 				if lastReadN != n {
@@ -297,10 +296,11 @@ func Feather(encryptPass string, encryptSalt string, hostAddr string, handshakeC
 			for {
 				pluckS, err := pluckListener.AcceptKCP()
 				if err != nil {
-					if errors.Is(err, os.ErrDeadlineExceeded) || err.Error() == "timeout" || err == io.EOF {
+					var netErr net.Error
+
+					if errors.Is(err, os.ErrDeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout()) || err == io.EOF {
 						pluckS.Close()
 					}
-					time.Sleep(time.Second)
 					continue
 				}
 
@@ -343,7 +343,6 @@ func PluckCtlEmit(featherCtx *FeatherContext, pense []byte) (bool, error) {
 retryEstablish:
 	penseConn, penseErr = kcp.Dial(hostAddr)
 	if penseErr != nil {
-		time.Sleep(time.Second)
 		if retries < 10 && penseErr != io.EOF {
 			retries = retries + 1
 			penseConn.Close()
@@ -357,13 +356,12 @@ retryEstablish:
 	defer penseConn.Close()
 
 	for {
-		time.Sleep(3 * time.Second)
 		penseConn.SetDeadline(time.Time{})
 		_, penseWriteErr := penseConn.Write(pluckPacket)
 		if penseWriteErr != nil {
-			if errors.Is(penseWriteErr, os.ErrDeadlineExceeded) || penseWriteErr.Error() == "timeout" || penseWriteErr == io.EOF || strings.Contains(penseWriteErr.Error(), "timeout") {
+			var netErr net.Error
+			if errors.Is(penseWriteErr, os.ErrDeadlineExceeded) || (errors.As(penseWriteErr, &netErr) && netErr.Timeout()) || penseWriteErr == io.EOF {
 				if retries < 10 {
-					time.Sleep(time.Second)
 					retries = retries + 1
 					penseConn.Close()
 					goto retryEstablish
@@ -378,9 +376,9 @@ retryEstablish:
 		penseConn.SetDeadline(time.Time{})
 		n, penseResponseErr := penseConn.Read(responseBuf)
 		if penseResponseErr != nil {
-			if errors.Is(penseResponseErr, os.ErrDeadlineExceeded) || penseResponseErr.Error() == "timeout" || penseResponseErr == io.EOF {
+			var netErr net.Error
+			if errors.Is(penseResponseErr, os.ErrDeadlineExceeded) || (errors.As(penseResponseErr, &netErr) && netErr.Timeout()) || penseResponseErr == io.EOF {
 				if retries < 10 {
-					time.Sleep(time.Second)
 					retries = retries + 1
 					penseConn.Close()
 					goto retryEstablish

@@ -6,7 +6,6 @@ import (
 	"os/signal"
 	"sync/atomic"
 	"syscall"
-	"time"
 
 	"github.com/mrjrieke/hat/cap"
 	captiplib "github.com/mrjrieke/hat/captip/captiplib"
@@ -26,14 +25,14 @@ func interrupted(featherCtx *cap.FeatherContext) error {
 }
 
 func queryAction(featherCtx *cap.FeatherContext, ctl string) (string, error) {
-	if *featherCtx.SessionIdentifier == "FeatherSessionTwo" {
-		// More leasurely walk through the woods.
-		time.Sleep(time.Millisecond * 250)
-	} else {
-		if ctl == "thro" {
-			return captiplib.FeatherQueryCache(featherCtx, "I think")
-		}
-	}
+	// if *featherCtx.SessionIdentifier == "FeatherSessionTwo" {
+	// 	// More leasurely walk through the woods.
+	// 	time.Sleep(time.Millisecond * 250)
+	// } else {
+	// 	if ctl == "thro" {
+	// 		return captiplib.FeatherQueryCache(featherCtx, "I think")
+	// 	}
+	// }
 	return "", nil
 }
 
@@ -53,9 +52,7 @@ rerun:
 	}
 	modeCtlTrailChan <- cap.CTL_COMPLETE
 	for {
-		if atomic.LoadInt64(&featherCtx.RunState) == cap.RUNNING {
-			time.Sleep(time.Second)
-		} else {
+		if atomic.LoadInt64(&featherCtx.RunState) != cap.RUNNING {
 			break
 		}
 	}

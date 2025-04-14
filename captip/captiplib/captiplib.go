@@ -64,7 +64,6 @@ func acceptInterruptFun(featherCtx *cap.FeatherContext, tickerContinue *time.Tic
 		// full stop
 		return true, errors.New("timeout")
 	}
-	return true, errors.New("not possible")
 }
 
 func acceptInterruptNoTimeoutFun(featherCtx *cap.FeatherContext, tickerContinue *time.Ticker) (bool, error) {
@@ -76,7 +75,6 @@ func acceptInterruptNoTimeoutFun(featherCtx *cap.FeatherContext, tickerContinue 
 		// don't break... continue...
 		return false, nil
 	}
-	return true, errors.New("not possible")
 }
 
 func AcceptRemoteNoTimeout(featherCtx *cap.FeatherContext, x int, y string) (bool, error) {
@@ -159,7 +157,7 @@ func FeatherCtl(featherCtx *cap.FeatherContext,
 							os.Exit(-1)
 						}
 					}
-					emote(featherCtx, ctlFlapMode, "\nWaiting...\n")
+					emote(featherCtx, ctlFlapMode, MSG_WAITING)
 					err := interruptFun(featherCtx, featherCtx.MultiSecondInterruptTicker)
 					if err != nil {
 						if featherCtx.InterruptHandlerFunc != nil {
